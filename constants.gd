@@ -1,10 +1,11 @@
 # Hex directions
-const DIR_N = 0
-const DIR_NE = 1
-const DIR_SE = 2
-const DIR_S = 3
+const DIR_NONE = 0
+const DIR_N = 1
+const DIR_NE = 2
+const DIR_SE = 3
 const DIR_SW = 4
 const DIR_NW = 5
+const DIR_S = 6
 
 # max size of the game board
 const COLX = 50

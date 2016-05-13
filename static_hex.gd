@@ -1,7 +1,10 @@
 extends Sprite
+# hex class, child of the hexgrid
 
 var c = preload("constants.gd")
-var index = Vector2(-1, -1)
+var m_index = Vector2(-1, -1)	# location on the hex grid
+var m_type = c.HEX_BLANK		# glyph type in the hex
+var m_dir = c.DIR_NONE			# direction this glyph is pointing
 
 # mostly prototype garbage: delete at some point
 var cooldown = 0.0
@@ -13,6 +16,7 @@ var heat_flag = false
 
 var mote_refs = []
 
+var greydot =  load("res://greydot.png")
 var move_N =  load("res://move_N.png")
 var move_NE = load("res://move_NE.png")
 var move_NW = load("res://move_NW.png")
@@ -21,14 +25,28 @@ var move_SE = load("res://move_SE.png")
 var move_SW = load("res://move_SW.png")
 
 func initialize(ind):
-	index = ind
+	m_index = ind
 
 func set_glyph(gtype, dir):
-	pass
+	if( gtype == c.HEX_BLANK ):
+		m_type = c.HEX_BLANK
+		m_dir = c.DIR_NONE
+		set_texture( greydot )
+		set_modulate( Color( 1, 1, 1 ) )
+	if( gtype == c.HEX_MOVE ):
+		m_type = gtype
+		m_dir = dir
+		if( dir == c.DIR_N ): set_texture( move_N )
+		if( dir == c.DIR_NE ): set_texture( move_NE )
+		if( dir == c.DIR_NW ): set_texture( move_NW )
+		if( dir == c.DIR_S ): set_texture( move_S )
+		if( dir == c.DIR_SE ): set_texture( move_SE )
+		if( dir == c.DIR_SW ): set_texture( move_SW )
+		set_modulate( Color( 0.5, 0.5, 0.5 ) )
 
 #func _input_event(ev):
 	#if(ev.type == InputEvent.MOUSE_BUTTON and ev.pressed):
-	#	#get_parent().trigger_func(index)
+	#	#get_parent().trigger_func(m_index)
 	#if(ev.type==InputEvent.MOUSE_MOTION):
 	#	if( randf() > 0.5 ):
 	#		self.set_pressed_texture( move_ur )
@@ -58,10 +76,10 @@ func _process(delta):
 		heat = false
 		heat_flag = false
 	if(cool and cooldown < 1.3 and not cool_flag):
-		get_parent().trigger_func(index)
+		get_parent().trigger_func(m_index)
 		cool_flag = true
 	if(heat and heatdown < 0.5 and not heat_flag):
-		get_parent().trigger_func2(index)
+		get_parent().trigger_func2(m_index)
 		heat_flag = true
 	if(cooldown < 0.0):
 		cooldown = 0.0

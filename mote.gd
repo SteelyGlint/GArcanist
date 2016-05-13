@@ -1,41 +1,49 @@
 extends Sprite
+# mote class, child of the hexgrid
 
-var loc_ind
-var dest_ind
-var progress = 0.0
-var offset = Vector2(0, 0)
+var c = preload("constants.gd")
+var m_loc_ind
+var m_dest_ind
+var m_dir = c.DIR_NONE
+var m_offset = Vector2(0, 0)
 var marked_for_death = false
 
 func _process(delta):
-	if( progress < 1.0 ):
-		progress += delta
-	else:
-		progress = 0
-		loc_ind = dest_ind
-		while (not choose_dest()): pass
-		if(randf() < 0.4): marked_for_death = true
-	set_pos( (1-progress)*get_parent().index_to_pix( loc_ind ) + progress*get_parent().index_to_pix( dest_ind ) )
-	if(marked_for_death): self.free()
+	var progress = get_parent().get_parent().tick_progress / 60.0
+	if(randf() < 0.1):
+		m_offset = (m_offset + Vector2( randf()-0.5, randf()-0.5 )) * 0.99
+	#if(randf() < 0.4): marked_for_death = true
+	set_pos( m_offset + (1-progress)*get_parent().get_parent().index_to_pix( m_loc_ind ) + progress*get_parent().get_parent().index_to_pix( m_dest_ind ) )
+	#if(marked_for_death): self.free()
+
+func tick():
+	m_loc_ind = m_dest_ind
+	while (not choose_dest()): pass
 
 func choose_dest():
-	var dir = randf()
-	var temp_dest
-	if  ( dir < 0.166 ): temp_dest = get_parent().get_ind_N(loc_ind)
-	elif( dir < 0.333 ): temp_dest = get_parent().get_ind_NW(loc_ind)
-	elif( dir < 0.5 ):   temp_dest = get_parent().get_ind_NE(loc_ind)
-	elif( dir < 0.666 ): temp_dest = get_parent().get_ind_SW(loc_ind)
-	elif( dir < 0.833 ): temp_dest = get_parent().get_ind_SE(loc_ind)
-	else:                temp_dest = get_parent().get_ind_S(loc_ind)
-	
-	if ( get_parent().check_bounds( temp_dest ) ):
-		dest_ind = temp_dest
+	var hex_loc = get_parent().get_parent().hexes[m_loc_ind]
+	if( hex_loc.m_type == c.HEX_MOVE ):
+		m_dir = hex_loc.m_dir
+		m_dest_ind = get_parent().get_parent().get_ind_dir( m_loc_ind, hex_loc.m_dir )
 		return true
-	else: return false
+	else:
+		var momentum_ind = get_parent().get_parent().get_ind_dir(m_loc_ind, m_dir)
+		if( get_parent().get_parent().check_bounds( momentum_ind ) and randf()>0.01 ):
+			m_dest_ind = momentum_ind
+			return true
+		else:
+			var tmp_dir = 1 + randi()%6
+			var tmp_dest = get_parent().get_parent().get_ind_dir(m_loc_ind, tmp_dir)
+			if ( get_parent().get_parent().check_bounds( tmp_dest ) ):
+				m_dest_ind = tmp_dest
+				m_dir = tmp_dir
+				return true
+			else: return false
 
 func initialize(loc):
-	loc_ind = loc
+	m_loc_ind = loc
 	while (not choose_dest()): pass
-	set_pos( get_parent().index_to_pix( loc_ind ) + Vector2(16, 16) )
+	set_pos( get_parent().get_parent().index_to_pix( m_loc_ind ) + Vector2(16, 16) )
 	show()
 
 func _ready():
