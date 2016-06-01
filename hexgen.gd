@@ -1,7 +1,7 @@
 extends Control
 
 # constants loaded from another script
-var c = preload("constants.gd")
+const c = preload("constants.gd")
 
 var hexNode = preload("res://static_hex.scn")
 var moteNode = preload("res://mote.scn")
@@ -11,7 +11,10 @@ var ind_select = Vector2( -1, -1 )
 var ind_hover = Vector2( -1, -1 )
 
 # variables during wand operation
+var TICK_INC = 3
 var tick_progress = 0		# next tick when this reaches 60
+
+var mote_count = 0
 
 func _ready():
 	set_size( Vector2( 1400, 816 ) )
@@ -95,7 +98,7 @@ func _input_event(ev):
 			#if(ev.button_index == BUTTON_RIGHT):
 			#	hexes[mouse_index].hex_activate(false)
 		if( ev.button_index == BUTTON_RIGHT and check_bounds(mouse_index) ):
-			for ii in range(50):
+			for ii in range(10):
 				var newmote = moteNode.instance()
 				get_node("motes").add_child(newmote)
 				newmote.initialize(mouse_index)
@@ -111,11 +114,14 @@ func _input_event(ev):
 					found_adjacent = true
 			if(not found_adjacent): hexes[ind_select].set_glyph(c.HEX_BLANK, c.DIR_NONE)
 
+func mote_added():
+	mote_count += 1
+
 func _process(delta):
+	tick_progress += TICK_INC
 	if( tick_progress >= 60):
 		tick_progress = 0
 		for mote in get_node("motes").get_children(): mote.tick()
-	tick_progress += 3
 	
 	var mouse_index = pix_to_index( get_global_mouse_pos() - get_global_pos() )
 	if( check_bounds ( mouse_index ) ):
@@ -126,6 +132,6 @@ func _process(delta):
 		get_node( "hover" ).hide()
 	
 	get_node( "disp1" ).set_text( str( get_global_mouse_pos() - get_global_pos() ) )
-	get_node( "disp2" ).set_text( str( get_node("motes").get_pos() ) )
+	get_node( "disp2" ).set_text( str( mote_count ) )
 	pass
 

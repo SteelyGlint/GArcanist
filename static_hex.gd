@@ -1,7 +1,7 @@
 extends Sprite
 # hex class, child of the hexgrid
 
-var c = preload("constants.gd")
+const c = preload("constants.gd")
 var m_index = Vector2(-1, -1)	# location on the hex grid
 var m_type = c.HEX_BLANK		# glyph type in the hex
 var m_dir = c.DIR_NONE			# direction this glyph is pointing
