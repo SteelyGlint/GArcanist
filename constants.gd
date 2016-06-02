@@ -14,6 +14,8 @@ const ROWY = 25
 # glyph types
 const HEX_BLANK			= 0
 const HEX_MOVE			= 1
+const HEX_EXTRACT		= 2
+const HEX_TERMINUS		= 3
 
 # mote elements: life
 const EL_BITTER			= 0

@@ -1,20 +1,23 @@
 extends Control
 
-# constants loaded from another script
-const c = preload("constants.gd")
+const c = preload("constants.gd")				# global constants loaded from another script
 
 var hexNode = preload("res://static_hex.scn")
 var moteNode = preload("res://mote.scn")
-var hexes = {}	# { index Vec2 : pointer }
+var hexes = {}									# dictionary of hex objects, indexed by Vector2 hex coords
 
-var ind_select = Vector2( -1, -1 )
-var ind_hover = Vector2( -1, -1 )
+# variables for interacting with the hexgrid
+var ind_hover = Vector2( -1, -1 )				# the hex that the mouse is currently hovering over
+var ind_select = Vector2( -1, -1 )				# the hex that is currently selected
 
 # variables during wand operation
-var TICK_INC = 3
-var tick_progress = 0		# next tick when this reaches 60
-
+var tick_progress = 0							# next tick when this reaches 60
+var TICK_MULT = 180								# speed at which progress accumulates, per second
 var mote_count = 0
+
+# variables during wand creation
+var glyph_type = c.HEX_BLANK					# type of glyph the player wishes to place
+var m_assigning = false							# is the LMB held down to create a glyph?
 
 func _ready():
 	set_size( Vector2( 1400, 816 ) )
@@ -56,35 +59,22 @@ func pix_to_index(pos):
 	var ind_y = floor( tmp_y / 32 )
 	return Vector2( ind_x, ind_y )
 
-# prototype garbage: remove at some point
-func trigger_func(index):
-	var tmp = get_ind_N(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(true)
-	var tmp = get_ind_NE(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(true)
-	var tmp = get_ind_NW(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(true)
-	var tmp = get_ind_SW(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(true)
-	var tmp = get_ind_SE(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(true)
-	var tmp = get_ind_S(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(true)
+func mouse_select_dir():
+	var center = get_global_pos() + hexes[ind_select].get_pos()
+	var angle = 6 / 3.1416 * center.angle_to_point( get_global_mouse_pos() )
+	if( angle <= 5 and angle > 3 ): return c.DIR_SW
+	elif( angle <= 3 and angle > 1 ): return c.DIR_NW
+	elif( angle <= 1 and angle > -1 ): return c.DIR_N
+	elif( angle <= -1 and angle > -3 ): return c.DIR_NE
+	elif( angle <= -3 and angle > -5 ): return c.DIR_SE
+	else: return c.DIR_S
 
-# prototype garbage: remove at some point
-func trigger_func2(index):
-	var tmp = get_ind_N(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(false)
-	var tmp = get_ind_NE(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(false)
-	var tmp = get_ind_NW(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(false)
-	var tmp = get_ind_SW(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(false)
-	var tmp = get_ind_SE(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(false)
-	var tmp = get_ind_S(index)
-	if( check_bounds(tmp) ): hexes[tmp].hex_activate(false)
+func assign_glyph():
+	if( check_bounds(ind_select) ):
+		if( glyph_type == c.HEX_BLANK ): hexes[ind_select].set_glyph(c.HEX_BLANK, c.DIR_NONE)
+		if( glyph_type == c.HEX_MOVE ): hexes[ind_select].set_glyph(c.HEX_MOVE, mouse_select_dir())
+		if( glyph_type == c.HEX_EXTRACT ): hexes[ind_select].set_glyph(c.HEX_EXTRACT, c.DIR_NONE)
+		if( glyph_type == c.HEX_TERMINUS ): hexes[ind_select].set_glyph(c.HEX_TERMINUS, c.DIR_NONE)
 
 func _input_event(ev):
 	if(ev.type == InputEvent.MOUSE_BUTTON and ev.pressed):
@@ -93,35 +83,29 @@ func _input_event(ev):
 			ind_select = mouse_index
 			get_node( "select" ).show()
 			get_node( "select" ).set_pos( index_to_pix ( mouse_index ) )
-			#if(ev.button_index == BUTTON_LEFT):
-			#	hexes[mouse_index].hex_activate(true)
-			#if(ev.button_index == BUTTON_RIGHT):
-			#	hexes[mouse_index].hex_activate(false)
+			m_assigning = true
+			
 		if( ev.button_index == BUTTON_RIGHT and check_bounds(mouse_index) ):
-			for ii in range(10):
-				var newmote = moteNode.instance()
-				get_node("motes").add_child(newmote)
-				newmote.initialize(mouse_index)
+			for ii in range(50): add_mote(mouse_index)
 	
-	if(ev.type == InputEvent.MOUSE_BUTTON and not ev.pressed and not ev.button_index == BUTTON_RIGHT ):
+	if(ev.type == InputEvent.MOUSE_BUTTON and not ev.pressed and ev.button_index == BUTTON_LEFT ):
 		var mouse_index = pix_to_index( ev.pos )
 		get_node( "select" ).hide()
-		if( check_bounds(mouse_index) and check_bounds(ind_select) ):
-			var found_adjacent = false
-			for direction in [c.DIR_N, c.DIR_NE, c.DIR_NW, c.DIR_SE, c.DIR_SW, c.DIR_S]:
-				if( get_ind_dir(ind_select, direction) == ind_hover ):
-					hexes[ind_select].set_glyph(c.HEX_MOVE, direction)
-					found_adjacent = true
-			if(not found_adjacent): hexes[ind_select].set_glyph(c.HEX_BLANK, c.DIR_NONE)
+		m_assigning = false
 
-func mote_added():
+func removed_mote(): mote_count -= 1
+func add_mote(index):
+	var newmote = moteNode.instance()
+	get_node("motes").add_child(newmote)
+	newmote.initialize(index)
 	mote_count += 1
 
 func _process(delta):
-	tick_progress += TICK_INC
+	tick_progress += (TICK_MULT * delta)
 	if( tick_progress >= 60):
-		tick_progress = 0
+		tick_progress -= 60
 		for mote in get_node("motes").get_children(): mote.tick()
+		get_tree().call_group(0, "hexes", "tick")
 	
 	var mouse_index = pix_to_index( get_global_mouse_pos() - get_global_pos() )
 	if( check_bounds ( mouse_index ) ):
@@ -131,7 +115,15 @@ func _process(delta):
 	else:
 		get_node( "hover" ).hide()
 	
-	get_node( "disp1" ).set_text( str( get_global_mouse_pos() - get_global_pos() ) )
-	get_node( "disp2" ).set_text( str( mote_count ) )
+	if( m_assigning ): assign_glyph()
+	
+	if( Input.is_action_pressed("hex_blank")): glyph_type = c.HEX_BLANK
+	if( Input.is_action_pressed("hex_move")): glyph_type = c.HEX_MOVE
+	if( Input.is_action_pressed("hex_extract")): glyph_type = c.HEX_EXTRACT
+	if( Input.is_action_pressed("hex_terminus")): glyph_type = c.HEX_TERMINUS
+	
+	get_node( "disp1" ).set_text( str( m_assigning ) )
+	get_node( "disp2" ).set_text( "motes: " + str( mote_count ) )
+	get_node( "disp3" ).set_text( "glyph type: " + str( glyph_type ) )
 	pass
 
