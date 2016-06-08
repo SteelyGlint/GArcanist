@@ -6,9 +6,10 @@ var hexNode = preload("res://static_hex.scn")
 var moteNode = preload("res://mote.scn")
 var hexes = {}									# dictionary of hex objects, indexed by Vector2 hex coords
 
-# variables for interacting with the hexgrid
+# variables for both build and run phases
 var ind_hover = Vector2( -1, -1 )				# the hex that the mouse is currently hovering over
 var ind_select = Vector2( -1, -1 )				# the hex that is currently selected
+var m_mode										# current game mode: build, run, etc.
 
 # variables during wand operation
 var tick_progress = 0							# next tick when this reaches 60
@@ -30,6 +31,7 @@ func _ready():
 			add_child(newhex)
 			hexes[hex_index] = newhex
 	get_node("motes").raise()
+	m_mode = c.MODE_BUILD
 	set_process(true)
 
 func get_ind_N(ind): return( ind + Vector2( 0, -1) )
@@ -83,10 +85,12 @@ func _input_event(ev):
 			ind_select = mouse_index
 			get_node( "select" ).show()
 			get_node( "select" ).set_pos( index_to_pix ( mouse_index ) )
-			m_assigning = true
-			
-		if( ev.button_index == BUTTON_RIGHT and check_bounds(mouse_index) ):
-			for ii in range(50): add_mote(mouse_index)
+			if(m_mode == c.MODE_BUILD):
+				m_assigning = true
+		
+		if(m_mode == c.MODE_RUN):
+			if( ev.button_index == BUTTON_RIGHT and check_bounds(mouse_index) ):
+				for ii in range(50): add_mote(mouse_index)
 	
 	if(ev.type == InputEvent.MOUSE_BUTTON and not ev.pressed and ev.button_index == BUTTON_LEFT ):
 		var mouse_index = pix_to_index( ev.pos )
@@ -101,7 +105,8 @@ func add_mote(index):
 	mote_count += 1
 
 func _process(delta):
-	tick_progress += (TICK_MULT * delta)
+	if(m_mode == c.MODE_RUN):
+		tick_progress += (TICK_MULT * delta)
 	if( tick_progress >= 60):
 		tick_progress -= 60
 		for mote in get_node("motes").get_children(): mote.tick()
@@ -117,13 +122,7 @@ func _process(delta):
 	
 	if( m_assigning ): assign_glyph()
 	
-	if( Input.is_action_pressed("hex_blank")): glyph_type = c.HEX_BLANK
-	if( Input.is_action_pressed("hex_move")): glyph_type = c.HEX_MOVE
-	if( Input.is_action_pressed("hex_extract")): glyph_type = c.HEX_EXTRACT
-	if( Input.is_action_pressed("hex_terminus")): glyph_type = c.HEX_TERMINUS
-	
 	get_node( "disp1" ).set_text( str( m_assigning ) )
 	get_node( "disp2" ).set_text( "motes: " + str( mote_count ) )
 	get_node( "disp3" ).set_text( "glyph type: " + str( glyph_type ) )
-	pass
 
