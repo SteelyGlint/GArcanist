@@ -21,15 +21,18 @@ const HEX_MOVE			= 1
 const HEX_EXTRACT		= 2
 const HEX_TERMINUS		= 3
 
+# element placeholder for initialization
+const EL_NONE			= -1
+
 # mote elements: life
-const EL_BITTER			= 0
+const EL_ACRID			= 0
 const EL_VENOM			= 1
-const EL_BLIGHT			= 2
+const EL_VITAL			= 2
 const EL_MEND			= 3
 const EL_SOOTHE			= 4
-const EL_SEDATE			= 5
-const EL_SPIRIT			= 6
-const EL_DRAIN			= 7
+const EL_SPIRIT			= 5
+const EL_DRAIN			= 6
+const EL_SEDATE			= 7
 
 # mote elements: spark
 const EL_SHOCK			= 10
@@ -37,12 +40,12 @@ const EL_BOLT			= 11
 const EL_SURGE			= 12
 const EL_THUNDER		= 13
 const EL_BRIGHT			= 14
-const EL_SENSE			= 15
+const EL_FLARE			= 15
 const EL_MIND			= 16
-#const EL_POWER			= 17
+const EL_SHARP			= 17
 
 # mote elements: flow
-const EL_SPRAY			= 20
+const EL_STREAM			= 20
 const EL_WIND			= 21
 const EL_WATER			= 22
 const EL_DELUGE			= 23
@@ -68,18 +71,18 @@ const EL_SHADOW			= 42
 const EL_IRON			= 43
 const EL_SEAL			= 44
 const EL_NULL			= 45
-const EL_BONE			= 46
-const EL_SHARP			= 47
-#const EL_HOLLOW			= 47
+const EL_DAMPEN			= 46
+const EL_BONE			= 47
 
 # mote elements: chaos
-const EL_ROT			= 50
+const EL_BLIGHT			= 50
 const EL_WILD			= 51
 const EL_OOZE			= 52
 const EL_ASH			= 53
-const EL_DUST			= 54
+const EL_RUST			= 54
 
-
+const EL_SHATTER		= 55
+const EL_TWIST			= 56
 
 
 

@@ -13,7 +13,7 @@ var m_mode										# current game mode: build, run, etc.
 
 # variables during wand operation
 var tick_progress = 0							# next tick when this reaches 60
-var TICK_MULT = 180								# speed at which progress accumulates, per second
+var TICK_MULT = 120								# speed at which progress accumulates, per second
 var mote_count = 0
 
 # variables during wand creation
@@ -87,6 +87,8 @@ func _input_event(ev):
 			get_node( "select" ).set_pos( index_to_pix ( mouse_index ) )
 			if(m_mode == c.MODE_BUILD):
 				m_assigning = true
+			elif(m_mode == c.MODE_RUN):
+				get_parent().get_node("gui_run").get_node("mote_observer").display(ind_select)
 		
 		if(m_mode == c.MODE_RUN):
 			if( ev.button_index == BUTTON_RIGHT and check_bounds(mouse_index) ):
@@ -94,8 +96,12 @@ func _input_event(ev):
 	
 	if(ev.type == InputEvent.MOUSE_BUTTON and not ev.pressed and ev.button_index == BUTTON_LEFT ):
 		var mouse_index = pix_to_index( ev.pos )
-		get_node( "select" ).hide()
-		m_assigning = false
+		if(m_mode == c.MODE_BUILD):
+			m_assigning = false
+			get_node( "select" ).hide()
+			ind_select = Vector2( -1, -1 ) # hack so observer panel is blank when switching
+		elif(m_mode == c.MODE_RUN):
+			pass
 
 func removed_mote(): mote_count -= 1
 func add_mote(index):
@@ -109,8 +115,9 @@ func _process(delta):
 		tick_progress += (TICK_MULT * delta)
 	if( tick_progress >= 60):
 		tick_progress -= 60
-		for mote in get_node("motes").get_children(): mote.tick()
 		get_tree().call_group(0, "hexes", "tick")
+		for mote in get_node("motes").get_children(): mote.tick()
+		get_parent().get_node("gui_run").get_node("mote_observer").display(ind_select)
 	
 	var mouse_index = pix_to_index( get_global_mouse_pos() - get_global_pos() )
 	if( check_bounds ( mouse_index ) ):
