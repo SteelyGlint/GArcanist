@@ -16,16 +16,19 @@ var m_offset = Vector2(0, 0)			# purely graphical offset so motes don't all stac
 var ref_hexgrid							# reference to the hexgrid
 var ref_hex_dict						# reference to the dictionary containing all hex objects
 
+var pix_from = Vector2(0, 0)
+var pix_curr = Vector2(0, 0)
+var pix_dest = Vector2(0, 0)
+
 func _process(delta):
 	var progress = ref_hexgrid.tick_progress / 60.0
-	set_pos( m_offset + (1-progress)*ref_hexgrid.index_to_pix( m_curr_ind ) + progress*ref_hexgrid.index_to_pix( m_dest_ind ) )
 	
-	# Bezier movement, too slow for now
-	#var part1 = (1-progress)*(1-progress)*(1-progress)	* (0.5*ref_hexgrid.index_to_pix( m_from_ind ) + 0.5*ref_hexgrid.index_to_pix( m_curr_ind ) )
-	#var part2 = 3*(1-progress)*(1-progress)*progress	* ref_hexgrid.index_to_pix( m_curr_ind )
-	#var part3 = 3*(1-progress)*progress*progress		* ref_hexgrid.index_to_pix( m_curr_ind )
-	#var part4 = progress*progress*progress				* (0.5*ref_hexgrid.index_to_pix( m_dest_ind ) + 0.5*ref_hexgrid.index_to_pix( m_curr_ind ) )
-	#set_pos( part1 + part2 + part3 + part4 + m_offset )
+	# old linear movement, index_to_pix() function is slow
+	#set_pos( m_offset + (1-progress)*ref_hexgrid.index_to_pix( m_curr_ind ) + progress*ref_hexgrid.index_to_pix( m_dest_ind ) )
+
+	# quadratic Bezier movement
+	set_pos( m_offset + ((1-progress)*(1-progress)*(pix_from+pix_curr))\
+		+ (4*(1-progress)*progress*pix_curr) + (progress*progress*(pix_dest+pix_curr)) )
 	
 	if(marked_for_death):
 		ref_hexgrid.removed_mote()
@@ -39,8 +42,16 @@ func tick():
 		while (not choose_dest()): pass
 		
 		ref_hex_dict[m_curr_ind].arr_motes.push_back(self)
+		
+		set_pixel_cache()
 	else:
 		marked_for_death = true
+
+func set_pixel_cache():
+	# pixel locations for position interpolation
+	pix_from = 0.5 * ref_hexgrid.index_to_pix(m_from_ind)
+	pix_curr = 0.5 * ref_hexgrid.index_to_pix(m_curr_ind)
+	pix_dest = 0.5 * ref_hexgrid.index_to_pix(m_dest_ind)
 
 func el_to_str(elem):
 	if(c.EL_NONE == elem): return "None"
@@ -81,6 +92,7 @@ func initialize(loc):
 	for el in range(3):
 		if( randi()%2 == 1 ): el_array[el] = c.EL_VENOM
 		else: el_array[el] = c.EL_BOLT
+	set_pixel_cache()
 	show()
 
 func _ready():
