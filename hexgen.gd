@@ -113,6 +113,7 @@ func add_mote(index):
 func _process(delta):
 	if(m_mode == c.MODE_RUN):
 		tick_progress += (TICK_MULT * delta)
+	
 	if( tick_progress >= 60):
 		tick_progress -= 60
 		get_tree().call_group(0, "hexes", "tick")
@@ -129,7 +130,9 @@ func _process(delta):
 	
 	if( m_assigning ): assign_glyph()
 	
-	get_node( "disp1" ).set_text( str( m_assigning ) )
+	get_node( "disp1" ).set_text( str( tick_progress ) )
 	get_node( "disp2" ).set_text( "motes: " + str( mote_count ) )
 	get_node( "disp3" ).set_text( "glyph type: " + str( glyph_type ) )
+	
+	
 
