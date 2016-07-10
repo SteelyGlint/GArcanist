@@ -6,6 +6,9 @@ const c = preload("constants.gd")
 var m_index = Vector2(-1, -1)			# location on the hex grid
 var m_type = c.HEX_BLANK				# glyph type in the hex
 var m_dir = c.DIR_NONE					# direction this glyph is pointing
+
+var m_dir_open = [true, true, true, true, true, true, true]	# flags to avoid mote collisions
+var m_incoming = 0											# incoming motes this tick
 var arr_motes=[]
 
 var ref_hexgrid							# reference to the hexgrid
@@ -59,8 +62,18 @@ func set_glyph(gtype, dir):
 func tick():
 	arr_motes.clear()	# should motes really have to add themselves to a new hex every tick?
 	
+	#set_modulate( Color( 1, 0.2*(5.0-m_incoming), 0.2*(5.0-m_incoming) ) )
+	
+	for ind in range(7): m_dir_open[ind] = true
+	m_incoming = 0
+	
 	if( m_type == c.HEX_EXTRACT ):
 		ref_hexgrid.add_mote(m_index)
+
+func tick_part2():
+	#set_modulate( Color( 1, 1, 1 ) )
+	#set_modulate( Color( 1, 0.2*(5.0-m_incoming), 0.2*(5.0-m_incoming) ) )
+	pass
 
 func _ready():
 	ref_hexgrid = get_parent()

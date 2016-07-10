@@ -13,7 +13,7 @@ var m_mode										# current game mode: build, run, etc.
 
 # variables during wand operation
 var tick_progress = 0							# next tick when this reaches 60
-var TICK_MULT = 120								# speed at which progress accumulates, per second
+var TICK_MULT = 60								# speed at which progress accumulates, per second
 var mote_count = 0
 
 # variables during wand creation
@@ -92,7 +92,7 @@ func _input_event(ev):
 		
 		if(m_mode == c.MODE_RUN):
 			if( ev.button_index == BUTTON_RIGHT and check_bounds(mouse_index) ):
-				for ii in range(50): add_mote(mouse_index)
+				for ii in range(24): add_mote(mouse_index)
 	
 	if(ev.type == InputEvent.MOUSE_BUTTON and not ev.pressed and ev.button_index == BUTTON_LEFT ):
 		var mouse_index = pix_to_index( ev.pos )
@@ -116,8 +116,14 @@ func _process(delta):
 	
 	if( tick_progress >= 60):
 		tick_progress -= 60
-		get_tree().call_group(0, "hexes", "tick")
+		
+		get_tree().call_group(0, "hexes", "tick")	# is there a cheaper way to do this?
 		for mote in get_node("motes").get_children(): mote.tick()
+		for mote in get_node("motes").get_children(): mote.tick_part2()
+		
+		# not working or something
+		#get_tree().call_group(0, "hexes", "tick_part2")
+		
 		get_parent().get_node("gui_run").get_node("mote_observer").display(ind_select)
 	
 	var mouse_index = pix_to_index( get_global_mouse_pos() - get_global_pos() )
